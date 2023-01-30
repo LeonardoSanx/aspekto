@@ -2,30 +2,35 @@
 import { useState, useEffect } from "react";
 import { server } from "../config";
 import queryString from "query-string";
+// import axios from "axios";
+import Router from "next/router";
 
-function Home({ adobeAPIKey, adobeAPISecret }) {
+export default function Home({ adobeAPIKey, adobeAPISecret }) {
   const [connected, setconnected] = useState(false);
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
-  const redirectUri = "https://aspekto.vercel.app";
-  const clientId = adobeAPIKey;
-  const clientSecret = adobeAPISecret;
+  const redirectUrl = "https://aspekto.vercel.app";
+  const crypto = require("crypto");
 
-  const [accessToken, setAccessToken] = useState(null);
-  const [error, setError] = useState(null);
+  function getClientAuth() {
+    // generate a random string for the state parameter
+    const state = crypto.randomBytes(32).toString("hex");
+    // store the state parameter in the user's session
+    sessionStorage.setItem("state", state);
 
-  async function getAccessToken() {
-    const responseCode = await fetch(
-      `https://ims-na1.adobelogin.com/ims/authorize/v2?client_id=${clientId}&state=90cff02f-da33-46ec-985c-1f5cf2f9644a&response_type=code`
-    );
-    console.log(responseCode);
+    console.log(state);
+    // construct the authorization request URL
+    const authUrl = `https://ims-na1.adobelogin.com/ims/authorize/v2?client_id=${adobeAPIKey}&scope=openid,creative_sdk&response_type=code&redirect_uri=${redirectUrl}&state=${state}`;
+    // `https://ims-na1.adobelogin.com/ims/authorize/v2?client_id=${adobeApiKey}&scope=openid,creative_sdk&response_type=code&redirect_uri=https://localhost:8000/callback`
+    // redirect the user to the authorization URL
+    Router.push(authUrl);
   }
 
   // Pegando o status do meu client ID
   async function getHealthStatus() {
     const responseHealth = await fetch(`https://lr.adobe.io/v2/health`, {
       headers: {
-        "x-api-key": `${clientId}`,
+        "x-api-key": `${adobeAPIKey}`,
         // 'Content-Type': 'application/x-www-form-urlencoded',
       },
     });
@@ -45,13 +50,13 @@ function Home({ adobeAPIKey, adobeAPISecret }) {
           // , getHealthStatus()
         }
       >
-        connect lightroom
+        status do client ID
       </button>
 
       <button
         className="flex py-2 px-6 text-gray-700 justify-center border-gray-700 border cursor-pointer text-sm rounded-xl shadow-md hover:text-gray-900 focus:border-gray-900"
         onClick={
-          async () => (setconnected(true), getAccessToken())
+          async () => (setconnected(true), getClientAuth())
           // , getHealthStatus()
         }
       >
@@ -60,8 +65,6 @@ function Home({ adobeAPIKey, adobeAPISecret }) {
     </main>
   );
 }
-
-export default Home;
 
 // Pegando os IDs do arquivo .env para passar pro componente Home
 export const getStaticProps = async () => {

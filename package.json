@@ -6,6 +6,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "crypto": "^1.0.1",
     "dotenv": "^10.0.0",
     "next": "latest",
     "query-string": "^8.1.0",
